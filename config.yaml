@@ -1,0 +1,38 @@
+# SSH Honeypot Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 2222                          # Use 22 in production (requires root)
+  max_connections: 100                # Max concurrent connections
+  connection_timeout: 120             # Seconds before idle disconnect
+  banner: "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6"
+
+shell:
+  hostname: "ubuntu-server"
+  username: "root"
+  fake_os: "Linux ubuntu-server 5.15.0-91-generic #101-Ubuntu SMP x86_64 GNU/Linux"
+  prompt: "root@ubuntu-server:~# "
+  response_delay_ms: 80              # Fake typing delay to seem real
+
+database:
+  path: "data/honeypot.db"
+
+geoip:
+  database_path: "data/GeoLite2-City.mmdb"  # Download from MaxMind
+  fallback_api: "http://ip-api.com/json"     # Used if DB not found
+
+logging:
+  level: "info"                       # debug / info / warn
+  sessions_dir: "data/sessions"       # Per-session JSON logs
+
+dashboard:
+  enabled: true
+  refresh_ms: 1000                    # UI refresh rate
+
+reporter:
+  enabled: true
+  output_dir: "data/reports"
+  schedule: "daily"                   # daily / hourly
+
+alerts:
+  discord_webhook: ""                 # URL to Discord webhook
