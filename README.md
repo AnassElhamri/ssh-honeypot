@@ -59,11 +59,21 @@ Responds to real Linux commands to keep attackers engaged:
 | `ls /`, `ls /etc` | Realistic directory listings |
 | `cat /etc/passwd` | Fake passwd file with real-looking entries |
 | `cat /etc/shadow` | Permission denied |
+| `cat .env` | **Lure**: Captures access to fake STRIPE/AWS keys |
+| `cat db_config.json` | **Lure**: Mock production database credentials |
 | `ps`, `w`, `uptime` | Fake process/user lists |
 | `ifconfig`, `netstat` | Fake network interfaces |
 | `wget`, `curl` | Hangs 2-3 seconds, then "connection timeout" |
 | `history` | Empty — good opsec simulation |
 | `find / -name passwd` | Returns realistic paths |
+
+### Active Deception (Honey-Traps)
+Includes "Honey-Files" in root and home directories containing fake high-value targets:
+- `.env` with mock Stripe and AWS credentials
+- `db_config.json` with fake production DB strings
+- `.bash_history` (simulated empty or seeded)
+- `/etc/ssh/sshd_config` realistic server config
+
 
 ### Threat Intelligence
 Every session is scored 0-100 based on:
@@ -71,8 +81,10 @@ Every session is scored 0-100 based on:
 - Number of unique usernames tried (credential stuffing detection)
 - Commands executed (interactive vs scanner)
 - Attack speed (automated brute force detection)
+- **Client Fingerprinting**: Captures the SSH version string (`libssh`, `Paramiko`, etc.) to identify automated bots vs. manual attackers.
 
 Attack patterns classified as: `scanner` / `brute_force` / `credential_stuffing` / `interactive_session`
+
 
 ### SQLite Database
 Structured schema with full query capability:
@@ -109,9 +121,9 @@ Real-time terminal UI showing:
 ### Reports
 Auto-generated on schedule (daily/hourly) and on shutdown:
 - **Markdown** — suitable for GitHub/Notion
-- **Markdown** — suitable for GitHub/Notion
 - **HTML** — full dark-theme web report with tables
 - **JSON** — SIEM-ready structured data for ELK/Splunk ingestion
+
 
 ### Real-time Alerts
 - **Discord Integration** — Receive instant notifications when a critical threat is detected.
@@ -175,6 +187,9 @@ geoip:
 
 reporter:
   schedule: "daily"            # daily or hourly
+
+alerts:
+  discord_webhook: "https://discord.com/api/webhooks/..." # Real-time alerts
 ```
 
 ---
@@ -228,9 +243,9 @@ Within minutes of deploying on a public server:
 
 ```
 2026-03-13 12:00:01 [INFO] NEW CONNECTION  ip=218.92.0.x       session=1
-2026-03-13 12:00:01 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=root
-2026-03-13 12:00:02 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=123456
-2026-03-13 12:00:02 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=password
+2026-03-13 12:00:01 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=root       ver=SSH-2.0-libssh-0.9.5
+2026-03-13 12:00:02 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=123456     ver=SSH-2.0-libssh-0.9.5
+2026-03-13 12:00:02 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=password   ver=SSH-2.0-libssh-0.9.5
 2026-03-13 12:00:03 [INFO] GEOIP           ip=218.92.0.x       🇨🇳 China  Shanghai  China Telecom
 2026-03-13 12:00:04 [INFO] AUTH ACCEPTED   ip=218.92.0.x       user=root  (honeypot shell)
 2026-03-13 12:00:05 [INFO] COMMAND         ip=218.92.0.x       cmd=whoami
