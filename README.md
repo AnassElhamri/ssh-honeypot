@@ -1,5 +1,7 @@
 # SSH Honeypot
 
+![SSH Honeypot Dashboard](ssh-honeypot.png)
+
 A production-grade SSH honeypot written in Go. Captures real attacker behaviour — credentials tried, commands executed, geographic origin — and exposes it through a live terminal dashboard and structured reports.
 
 Deploy it on any internet-facing server and watch real attacks happen within minutes.
