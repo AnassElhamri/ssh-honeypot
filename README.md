@@ -256,6 +256,10 @@ To deploy your honeypot on a real production server (like Ubuntu), follow these 
    nohup ./honeypot --no-dashboard &
    ```
 
+> [!IMPORTANT]
+> **Cloud Provider Note (Oracle, AWS, Azure, Google Cloud)**:  
+> If you are using a Cloud VPS, `ufw` is not enough! You **must** also open Ports 22 and 2222 in your Cloud Console's **Security Groups** or **Ingress Rules**. Otherwise, you will be locked out of your server.
+
 ### 🛠️ Troubleshooting
 
 #### "Server error: bind: address already in use"
