@@ -133,22 +133,49 @@ Auto-generated on schedule (daily/hourly) and on shutdown:
 
 ---
 
-## Requirements
+### Prerequisites
 
-- Go 1.22+
-- Linux/macOS (or WSL on Windows)
-- Optional: [MaxMind GeoLite2-City database](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data) for offline GeoIP
+- **Go 1.20 or higher** (Required to build the binary)
+- **MaxMind GeoLite2 City Database** (Optional, for location maps)
+- **Discord Webhook URL** (Optional, for real-time alerts)
 
----
+#### Installing Go
 
-## Installation
-
+**On Ubuntu / Debian:**
 ```bash
-git clone https://github.com/AnassElhamri/ssh-honeypot.git
-cd ssh-honeypot
-go mod tidy
-go build -o honeypot ./cmd/honeypot
+sudo apt update
+sudo apt install golang -y
 ```
+
+**On Windows:**
+Download and run the installer from the [official Go website](https://go.dev/dl/).
+
+**Verify Installation:**
+```bash
+go version
+```
+
+### Installation & Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/AnassElhamri/ssh-honeypot.git
+   cd ssh-honeypot
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   go mod tidy
+   ```
+
+3. **Build the tool:**
+   ```bash
+   # Windows
+   go build -o honeypot.exe ./cmd/honeypot
+
+   # Linux
+   go build -o honeypot ./cmd/honeypot
+   ```
 
 ---
 

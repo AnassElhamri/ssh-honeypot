@@ -82,9 +82,14 @@ func (l *Logger) log(level Level, format string, args ...any) {
 	cb := l.onLog
 	l.mu.Unlock()
 
+	line := fmt.Sprintf("%s [%s] %s", ts, level, msg)
 	if cb != nil {
-		cb(fmt.Sprintf("%s [%s] %s", ts, level, msg))
-	} else {
+		cb(line)
+	}
+
+	// Always print ERROR and WARN to console for easier debugging
+	// Unless it's INFO/DEBUG and a callback is active (dashboard mode)
+	if cb == nil || level >= WARN {
 		l.console.Printf("%s%s [%s] %s%s", colors[level], ts, level, msg, reset)
 	}
 }
