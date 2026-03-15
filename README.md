@@ -155,43 +155,46 @@ Download and run the installer from the [official Go website](https://go.dev/dl/
 go version
 ```
 
-### Installation & Setup
+### 🚀 Quick Start (Production)
 
-1. **Clone the repository:**
+Follow these steps for a complete, fresh installation on a Linux server:
+
+1. **Clone & Build**:
    ```bash
    git clone https://github.com/AnassElhamri/ssh-honeypot.git
    cd ssh-honeypot
-   ```
-
-2. **Install dependencies:**
-   ```bash
    go mod tidy
+   go build -o honeypot ./cmd/honeypot
    ```
 
-3. **Build the tool:**
+2. **Configure**:
    ```bash
-   # Windows
-   go build -o honeypot.exe ./cmd/honeypot
+   nano config.yaml
+   ```
+   *   Change `port: 2222` to **`port: 22`**.
+   *   *(Optional)* Add your Discord Webhook URL.
 
-   # Linux
-   go build -o honeypot ./cmd/honeypot
+3. **Set Permissions & Run**:
+   ```bash
+   sudo setcap 'cap_net_bind_service=+ep' ./honeypot
+   sudo -E ./honeypot
    ```
 
 ---
 
-## Usage
+### 📖 Detailed Usage & Commands
 
 ```bash
-# Run with live dashboard
-./honeypot
+# Run with live dashboard (Standard)
+sudo -E ./honeypot
 
-# Run without dashboard (plain log output)
-./honeypot --no-dashboard
+# Run without dashboard (Plain log output)
+sudo ./honeypot --no-dashboard
 
-# Custom config file
-./honeypot --config /etc/honeypot/config.yaml
+# Run in background (For long-term deployment)
+nohup ./honeypot --no-dashboard &
 
-# Generate a report and exit
+# Generate a report from current database
 ./honeypot --report
 ```
 
