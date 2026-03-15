@@ -155,7 +155,7 @@ Download and run the installer from the [official Go website](https://go.dev/dl/
 go version
 ```
 
-### 🚀 Quick Start (Production)
+###  Quick Start (Production)
 
 Follow these steps for a complete, fresh installation on a Linux server:
 
@@ -182,7 +182,7 @@ Follow these steps for a complete, fresh installation on a Linux server:
 
 ---
 
-### 📖 Detailed Usage & Commands
+###  Detailed Usage & Commands
 
 ```bash
 # Run with live dashboard (Standard)
@@ -226,7 +226,7 @@ alerts:
 
 ---
 
-## 🚀 Production Deployment (Linux)
+##  Production Deployment (Linux)
 
 To deploy your honeypot on a real production server (like Ubuntu), follow these steps to ensure port 22 is handled safely:
 
@@ -256,7 +256,7 @@ To deploy your honeypot on a real production server (like Ubuntu), follow these 
    nohup ./honeypot --no-dashboard &
    ```
 
-### 🛠️ Troubleshooting
+###  Troubleshooting
 
 #### "Server error: bind: address already in use"
 Another process is using your port (usually your real SSH or a previous honeypot run).
