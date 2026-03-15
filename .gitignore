@@ -1,34 +1,21 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+# Binaries
+honeypot
+honeypot.exe
 
-# Test binary, built with `go test -c`
-*.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
-go.work
-
-# Honeypot Data
-data/*.db
-data/host_key
+# Data and Logs
+data/honeypot.db
+data/honeypot.db-journal
 data/sessions/
 data/reports/
-data/GeoLite2-City.mmdb
-
-# Config
-config.yaml.local
+data/host_key
 
 # IDEs
-.idea/
 .vscode/
-*.swp
-*.swo
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Go dependencies
+vendor/

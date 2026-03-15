@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Honeypot | Analytics Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dark-mode">
+    <div class="glass-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="shield-icon">🛡️</span>
+                <h1>HONEYPOT</h1>
+            </div>
+            <nav>
+                <a href="#" class="active" data-page="dashboard">Dashboard</a>
+                <a href="#" data-page="sessions">Active Sessions</a>
+                <a href="#" data-page="reports">Reports</a>
+            </nav>
+            <div class="sidebar-footer">
+                <p>v1.2.0 | Production</p>
+            </div>
+        </aside>
+
+        <main class="content">
+            <header class="top-bar">
+                <div class="search-area">
+                    <span class="status-badge pulse">Real-time Protection Active</span>
+                </div>
+                <div class="user-profile">
+                    <span class="admin-badge">ADMIN</span>
+                </div>
+            </header>
+
+            <section id="dashboard" class="page active">
+                <div class="stats-grid">
+                    <div class="stat-card glass">
+                        <h3>Total Hits</h3>
+                        <p id="total-hits" class="count">0</p>
+                        <span class="trend up">+12% vs last 24h</span>
+                    </div>
+                    <div class="stat-card glass">
+                        <h3>Active Threats</h3>
+                        <p id="active-now" class="count">0</p>
+                        <span class="trend">Live Monitoring</span>
+                    </div>
+                    <div class="stat-card glass">
+                        <h3>Unique IPs</h3>
+                        <p id="unique-ips" class="count">0</p>
+                        <span class="trend up">+5%</span>
+                    </div>
+                    <div class="stat-card glass">
+                        <h3>Global Rank</h3>
+                        <p class="count">TOP 5%</p>
+                        <span class="trend">Hardened</span>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-container glass">
+                        <h3>Attack Distribution (by Country)</h3>
+                        <canvas id="countryChart"></canvas>
+                    </div>
+                    <div class="chart-container glass">
+                        <h3>Common Password Attempts</h3>
+                        <canvas id="passwordChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sessions" class="page">
+                <div class="table-container glass">
+                    <div class="table-header">
+                        <h3>Live Traffic</h3>
+                        <div class="actions">
+                            <span class="hint">Select an IP to Block</span>
+                        </div>
+                    </div>
+                    <table id="sessionsTable">
+                        <thead>
+                            <tr>
+                                <th>IP ADDRESS</th>
+                                <th>COUNTRY</th>
+                                <th>THREAT</th>
+                                <th>ACTIVITY</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="reports" class="page">
+                <div class="reports-grid" id="reportsList">
+                    <!-- Loaded via JS -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="notification-root"></div>
+    <script src="app.js"></script>
+</body>
+</html>

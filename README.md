@@ -127,8 +127,9 @@ Auto-generated on schedule (daily/hourly) and on shutdown:
 - **JSON** — SIEM-ready structured data for ELK/Splunk ingestion
 
 
-### Real-time Alerts
+### Real-time Alerts & Active Defense
 - **Discord Integration** — Receive instant notifications when a critical threat is detected.
+- **Active IP Blocking** — Select any active session in the dashboard and press `b` to instantly disconnect the attacker and block their IP permanently using `ufw` or `iptables`.
 - Configurable threat thresholds for automated alerting.
 
 ---

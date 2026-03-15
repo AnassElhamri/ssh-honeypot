@@ -14,6 +14,7 @@ import (
 	"github.com/AnassElhamri/ssh-honeypot/internal/logger"
 	"github.com/AnassElhamri/ssh-honeypot/internal/reporter"
 	"github.com/AnassElhamri/ssh-honeypot/internal/server"
+	"github.com/AnassElhamri/ssh-honeypot/internal/web"
 )
 
 // appConfig mirrors config.yaml structure.
@@ -46,6 +47,10 @@ type appConfig struct {
 		Enabled   bool `yaml:"enabled"`
 		RefreshMs int  `yaml:"refresh_ms"`
 	} `yaml:"dashboard"`
+	Web struct {
+		Enabled bool `yaml:"enabled"`
+		Port    int  `yaml:"port"`
+	} `yaml:"web"`
 	Reporter struct {
 		Enabled   bool   `yaml:"enabled"`
 		OutputDir string `yaml:"output_dir"`
@@ -137,12 +142,23 @@ func main() {
 	// ── Dashboard — uses the server's own tracker ─────────────────────────────
 	var dash *dashboard.Dashboard
 	if cfg.Dashboard.Enabled && !*noDashboard {
-		dash = dashboard.New(db, srv.Tracker(), cfg.Dashboard.RefreshMs)
+		dash = dashboard.New(db, srv.Tracker(), cfg.Dashboard.RefreshMs, srv.BlockIP)
 		log.SetCallback(dash.AddLogLine)
 		dash.Start(func() {
 			close(shutdown)
 		})
 		log.Info("Dashboard started — press Q to quit")
+	}
+
+	// ── Web Dashboard Hub ─────────────────────────────────────────────────────
+	if cfg.Web.Enabled {
+		webSrv := web.New(db, srv.Tracker(), cfg.Web.Port, srv.BlockIP)
+		go func() {
+			if err := webSrv.Start(); err != nil {
+				log.Error("Web server error: %v", err)
+			}
+		}()
+		log.Info("Web Dashboard active at http://localhost:%d", cfg.Web.Port)
 	}
 
 	// ── Reporter scheduler ────────────────────────────────────────────────────
@@ -195,6 +211,7 @@ func loadConfig(path string) (*appConfig, error) {
 	if cfg.Shell.ResponseDelayMs == 0    { cfg.Shell.ResponseDelayMs = 80 }
 	if cfg.Database.Path == ""           { cfg.Database.Path = "data/honeypot.db" }
 	if cfg.Dashboard.RefreshMs == 0      { cfg.Dashboard.RefreshMs = 1000 }
+	if cfg.Web.Port == 0                { cfg.Web.Port = 8080 }
 	if cfg.Reporter.OutputDir == ""      { cfg.Reporter.OutputDir = "data/reports" }
 	if cfg.Reporter.Schedule == ""       { cfg.Reporter.Schedule = "daily" }
 	if cfg.Logging.SessionsDir == ""     { cfg.Logging.SessionsDir = "data/sessions" }

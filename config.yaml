@@ -29,6 +29,10 @@ dashboard:
   enabled: true
   refresh_ms: 1000                    # UI refresh rate
 
+web:
+  enabled: true
+  port: 8080                          # Dashboard accessible at http://localhost:8080
+
 reporter:
   enabled: true
   output_dir: "data/reports"

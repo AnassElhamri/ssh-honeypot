@@ -30,15 +30,17 @@ type Dashboard struct {
 	mu        sync.Mutex
 	logLines  []string
 	startTime time.Time
+	onBlock   func(string)
 }
 
 // New creates the dashboard.
-func New(db *logger.DB, tracker *analyzer.Tracker, refreshMs int) *Dashboard {
+func New(db *logger.DB, tracker *analyzer.Tracker, refreshMs int, onBlock func(string)) *Dashboard {
 	d := &Dashboard{
 		db:        db,
 		tracker:   tracker,
 		refreshMs: refreshMs,
 		startTime: time.Now(),
+		onBlock:   onBlock,
 	}
 	d.build()
 	return d
@@ -60,9 +62,9 @@ func (d *Dashboard) build() {
 		SetTitle(" [yellow] Statistics[-] ").
 		SetTitleAlign(tview.AlignLeft)
 
-	d.liveBox = tview.NewTable().SetFixed(1, 0).SetSelectable(false, false)
+	d.liveBox = tview.NewTable().SetFixed(1, 0).SetSelectable(true, false)
 	d.liveBox.SetBorder(true).
-		SetTitle(" [red]🔴 Active Sessions[-] ").
+		SetTitle(" [red]🔴 Active Sessions (Select + 'b' to Block)[-] ").
 		SetTitleAlign(tview.AlignLeft)
 	d.setLiveHeaders()
 
@@ -101,6 +103,15 @@ func (d *Dashboard) build() {
 	d.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc || event.Rune() == 'q' {
 			d.app.Stop()
+		}
+		if event.Rune() == 'b' {
+			row, _ := d.liveBox.GetSelection()
+			if row > 0 {
+				ipCell := d.liveBox.GetCell(row, 1)
+				if ipCell != nil && d.onBlock != nil {
+					d.onBlock(ipCell.Text)
+				}
+			}
 		}
 		return event
 	})

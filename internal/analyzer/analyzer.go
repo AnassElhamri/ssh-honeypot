@@ -176,20 +176,25 @@ func (s *SessionStats) IsIdle() bool {
 
 // Tracker manages all active sessions globally.
 type Tracker struct {
-	mu       sync.RWMutex
-	sessions map[int64]*SessionStats
+	mu         sync.RWMutex
+	sessions   map[int64]*SessionStats
+	closers    map[int64]func()
 }
 
 // NewTracker creates a global session tracker.
 func NewTracker() *Tracker {
-	return &Tracker{sessions: make(map[int64]*SessionStats)}
+	return &Tracker{
+		sessions: make(map[int64]*SessionStats),
+		closers:  make(map[int64]func()),
+	}
 }
 
 // Add registers a new session.
-func (t *Tracker) Add(id int64, ip string) *SessionStats {
+func (t *Tracker) Add(id int64, ip string, closer func()) *SessionStats {
 	stats := NewSessionStats(ip)
 	t.mu.Lock()
 	t.sessions[id] = stats
+	t.closers[id] = closer
 	t.mu.Unlock()
 	return stats
 }
@@ -205,6 +210,7 @@ func (t *Tracker) Get(id int64) *SessionStats {
 func (t *Tracker) Remove(id int64) {
 	t.mu.Lock()
 	delete(t.sessions, id)
+	delete(t.closers, id)
 	t.mu.Unlock()
 }
 
@@ -224,4 +230,22 @@ func (t *Tracker) ActiveSessions() map[int64]*SessionStats {
 		snap[k] = v
 	}
 	return snap
+}
+
+// TerminateIP closes all active sessions for a specific IP.
+func (t *Tracker) TerminateIP(ip string) {
+	t.mu.RLock()
+	var toClose []func()
+	for id, stats := range t.sessions {
+		if stats.IP == ip {
+			if closer, ok := t.closers[id]; ok {
+				toClose = append(toClose, closer)
+			}
+		}
+	}
+	t.mu.RUnlock()
+
+	for _, closeFunc := range toClose {
+		closeFunc()
+	}
 }

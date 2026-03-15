@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -42,6 +43,8 @@ type Server struct {
 	geo       *geoip.Resolver
 	tracker   *analyzer.Tracker
 	semaphore chan struct{}
+	blacklist sync.Map
+	fw        *Firewall
 }
 
 // New creates and configures a new SSH honeypot server.
@@ -53,6 +56,7 @@ func New(cfg *Config, log *logger.Logger, db *logger.DB, geo *geoip.Resolver) (*
 		geo:       geo,
 		tracker:   analyzer.NewTracker(),
 		semaphore: make(chan struct{}, cfg.MaxConnections),
+		fw:        NewFirewall(),
 	}
 	hostKey, err := s.loadOrGenerateHostKey()
 	if err != nil {
@@ -109,6 +113,12 @@ func (s *Server) handleConn(conn net.Conn) {
 		ip = host
 	}
 
+	if _, blacklisted := s.blacklist.Load(ip); blacklisted {
+		s.log.Warn("REJECTED BLACKLISTED IP: %s", ip)
+		conn.Close()
+		return
+	}
+
 	conn.SetDeadline(time.Now().Add(s.cfg.ConnectionTimeout))
 
 	sessionID, err := s.db.CreateSession(ip, port)
@@ -119,7 +129,7 @@ func (s *Server) handleConn(conn net.Conn) {
 	}
 
 	s.log.LogConnect(sessionID, ip, port)
-	stats := s.tracker.Add(sessionID, ip)
+	stats := s.tracker.Add(sessionID, ip, func() { conn.Close() })
 
 	sshConn, chans, reqs, err := ssh.NewServerConn(conn, s.buildSSHConfig(sessionID, ip, stats))
 	if err != nil {
@@ -241,4 +251,20 @@ func (s *Server) loadOrGenerateHostKey() (ssh.Signer, error) {
 
 	s.log.Info("Host key generated.")
 	return ssh.NewSignerFromKey(privateKey)
+}
+
+// BlockIP adds an IP to the blacklist and runs firewall commands.
+func (s *Server) BlockIP(ip string) {
+	s.blacklist.Store(ip, true)
+	s.log.Warn("IP BLACKLISTED: %s", ip)
+
+	// Terminate active sessions for this IP
+	s.tracker.TerminateIP(ip)
+
+	// Try OS-level block
+	if err := s.fw.BlockIP(ip); err != nil {
+		s.log.Error("firewall block failed for %s: %v", ip, err)
+	} else {
+		s.log.Info("FIREWALL RULE ADDED: Blocked %s", ip)
+	}
 }
