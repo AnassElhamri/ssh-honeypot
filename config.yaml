@@ -32,6 +32,8 @@ dashboard:
 web:
   enabled: true
   port: 8080                          # Dashboard accessible at http://localhost:8080
+  username: "admin"                   # Dashboard username
+  password: "admin123"                # Dashboard password
 
 reporter:
   enabled: true

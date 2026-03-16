@@ -48,8 +48,10 @@ type appConfig struct {
 		RefreshMs int  `yaml:"refresh_ms"`
 	} `yaml:"dashboard"`
 	Web struct {
-		Enabled bool `yaml:"enabled"`
-		Port    int  `yaml:"port"`
+		Enabled  bool   `yaml:"enabled"`
+		Port     int    `yaml:"port"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
 	} `yaml:"web"`
 	Reporter struct {
 		Enabled   bool   `yaml:"enabled"`
@@ -137,22 +139,23 @@ func main() {
 	// ── Graceful shutdown logic ───────────────────────────────────────────────
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
-	shutdown := make(chan struct{})
 
 	// ── Dashboard — uses the server's own tracker ─────────────────────────────
 	var dash *dashboard.Dashboard
 	if cfg.Dashboard.Enabled && !*noDashboard {
 		dash = dashboard.New(db, srv.Tracker(), cfg.Dashboard.RefreshMs, srv.BlockIP)
-		log.SetCallback(dash.AddLogLine)
+		log.AddCallback(dash.AddLogLine)
 		dash.Start(func() {
-			close(shutdown)
+			log.Info("Terminal dashboard stopped")
 		})
-		log.Info("Dashboard started — press Q to quit")
+		log.Info("Console Dashboard started")
 	}
 
 	// ── Web Dashboard Hub ─────────────────────────────────────────────────────
 	if cfg.Web.Enabled {
-		webSrv := web.New(db, srv.Tracker(), cfg.Web.Port, srv.BlockIP)
+		webSrv := web.New(db, srv.Geo(), srv.Tracker(), cfg.Web.Port, cfg.Web.Username, cfg.Web.Password, cfg.Logging.SessionsDir, srv.BlockIP)
+		log.AddCallback(webSrv.BroadcastLog)
+		srv.SetOnPing(webSrv.BroadcastPing)
 		go func() {
 			if err := webSrv.Start(); err != nil {
 				log.Error("Web server error: %v", err)
@@ -175,13 +178,14 @@ func main() {
 		}
 	}()
 
-	// Wait for either Ctrl+C or Dashboard closing
-	select {
-	case <-quit:
-	case <-shutdown:
-	}
+	// No longer running auto-simulation here
 
-	fmt.Println("\nShutting down...")
+	fmt.Printf("\n[SUCCESS] Honeypot is LIVE and listening on %s:%d\n", cfg.Server.Host, cfg.Server.Port)
+	fmt.Printf("[READY] Web Dashboard: http://localhost:%d\n\n", cfg.Web.Port)
+
+	// Wait for Ctrl+C
+	sig := <-quit
+	fmt.Printf("\n>> Signal received: %v. Initiating graceful shutdown...\n", sig)
 	if dash != nil {
 		dash.Stop()
 	}
@@ -212,6 +216,8 @@ func loadConfig(path string) (*appConfig, error) {
 	if cfg.Database.Path == ""           { cfg.Database.Path = "data/honeypot.db" }
 	if cfg.Dashboard.RefreshMs == 0      { cfg.Dashboard.RefreshMs = 1000 }
 	if cfg.Web.Port == 0                { cfg.Web.Port = 8080 }
+	if cfg.Web.Username == ""          { cfg.Web.Username = "admin" }
+	if cfg.Web.Password == ""          { cfg.Web.Password = "admin123" }
 	if cfg.Reporter.OutputDir == ""      { cfg.Reporter.OutputDir = "data/reports" }
 	if cfg.Reporter.Schedule == ""       { cfg.Reporter.Schedule = "daily" }
 	if cfg.Logging.SessionsDir == ""     { cfg.Logging.SessionsDir = "data/sessions" }

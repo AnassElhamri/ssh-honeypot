@@ -1,13 +1,16 @@
 # Binaries
 honeypot
-honeypot.exe
+*.exe
+*.bin
+bin/
 
 # Data and Logs
-data/honeypot.db
-data/honeypot.db-journal
+data/*.db
+data/*.db-*
 data/sessions/
 data/reports/
 data/host_key
+data/*.mmdb
 
 # IDEs
 .vscode/
@@ -17,5 +20,6 @@ data/host_key
 .DS_Store
 Thumbs.db
 
-# Go dependencies
+# Go
 vendor/
+go.work

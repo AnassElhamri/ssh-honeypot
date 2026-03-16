@@ -1,112 +1,516 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="h-full" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSH Honeypot | Analytics Hub</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SSH Honeypot | Threat Intelligence</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Leaflet.js Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                gh: {
+                  bg: '#0d1117',
+                  card: '#161b22',
+                  border: '#30363d',
+                  text: '#e6edf3',
+                  muted: '#8b949e',
+                  blue: '#58a6ff',
+                  red: '#f85149',
+                  yellow: '#d29922',
+                  green: '#3fb950'
+                }
+              },
+              fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+                mono: ['JetBrains Mono', 'monospace'],
+              }
+            }
+          }
+        }
+    </script>
+    <style data-purpose="custom-animations">
+        @keyframes pulse-red {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.7); }
+          70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(248, 81, 73, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(248, 81, 73, 0); }
+        }
+        .animate-pulse-red {
+          animation: pulse-red 2s infinite;
+        }
+        .peer:checked + .custom-checkbox .check-icon {
+          opacity: 1 !important;
+        }
+        @keyframes modal-pop {
+          0% { transform: scale(0.95); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-modal-pop {
+          animation: modal-pop 0.2s ease-out forwards;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #0d1117;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #30363d;
+          border-radius: 10px;
+        }
+        .log-line {
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        /* Leaflet & Pulse Animation */
+        #world-map { background: #0d1117; }
+        .leaflet-container { background: transparent !important; }
+        
+        :root {
+            --pulse-size: 12px;
+        }
+        .pulse {
+            width: var(--pulse-size);
+            height: var(--pulse-size);
+            background-color: #f85149;
+            border-radius: 50%;
+            box-shadow: 0 0 0 rgba(248, 81, 73, 0.4);
+            animation: pulse-dot 1.5s infinite;
+            cursor: pointer;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(248, 81, 73, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(248, 81, 73, 0); }
+        }
+
+        .attack-line {
+            stroke-dasharray: 10;
+            animation: dash 1s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -20; }
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: #161b22 !important;
+            color: #e6edf3 !important;
+            border: 1px solid #30363d !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 11px !important;
+        }
+        .leaflet-popup-tip { background: #30363d !important; }
+    </style>
 </head>
-<body class="dark-mode">
-    <div class="glass-container">
-        <aside class="sidebar">
-            <div class="logo">
-                <span class="shield-icon">🛡️</span>
-                <h1>HONEYPOT</h1>
+<body class="bg-gh-bg text-gh-text font-sans antialiased min-h-screen p-4 flex flex-col gap-4">
+
+<!-- Header -->
+<header class="flex justify-between items-center mb-2 px-2">
+    <div class="flex items-center gap-3">
+        <div class="bg-gh-card p-1 rounded-lg border border-gh-border overflow-hidden">
+            <img src="logo.png" alt="SnakeSec" class="w-10 h-10 object-cover rounded-md shadow-lg shadow-gh-green/10">
+        </div>
+        <div>
+            <h1 class="text-xl font-bold tracking-tight text-gh-text">SnakeSec Threat Intelligence</h1>
+            <p class="text-xs text-gh-muted font-mono uppercase tracking-widest">Global Sensor Network Dashboard</p>
+        </div>
+    </div>
+    <div class="flex items-center gap-4">
+        <!-- Profile Dropdown -->
+        <div class="relative group">
+            <button class="size-10 rounded-full border border-gh-border bg-gh-card flex items-center justify-center text-gh-muted hover:text-gh-blue hover:border-gh-blue transition-all overflow-hidden shadow-lg shadow-gh-blue/5">
+                <span class="material-symbols-outlined">account_circle</span>
+            </button>
+            <div class="absolute right-0 mt-2 w-48 bg-gh-card border border-gh-border rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] py-2">
+                <div class="px-4 py-2 border-b border-gh-border mb-1">
+                    <p class="text-[10px] font-bold text-gh-muted uppercase tracking-widest">Operator</p>
+                    <p class="text-xs font-bold text-gh-text truncate">admin@snakesec.io</p>
+                </div>
+                <a href="/" class="flex items-center gap-3 px-4 py-2 text-xs font-bold text-gh-muted hover:text-gh-blue hover:bg-gh-blue/5 transition-colors">
+                    <span class="material-symbols-outlined text-sm">dashboard</span>
+                    DASHBOARD
+                </a>
+                <a href="/settings.html" class="flex items-center gap-3 px-4 py-2 text-xs font-bold text-gh-muted hover:text-gh-blue hover:bg-gh-blue/5 transition-colors">
+                    <span class="material-symbols-outlined text-sm">settings</span>
+                    ADMIN SETTINGS
+                </a>
+                <div class="border-t border-gh-border mt-1 pt-1">
+                    <a href="/logout" class="flex items-center gap-3 px-4 py-2 text-xs font-bold text-gh-red hover:bg-gh-red/5 transition-colors">
+                        <span class="material-symbols-outlined text-sm">logout</span>
+                        LOGOUT
+                    </a>
+                </div>
             </div>
-            <nav>
-                <a href="#" class="active" data-page="dashboard">Dashboard</a>
-                <a href="#" data-page="sessions">Active Sessions</a>
-                <a href="#" data-page="reports">Reports</a>
-            </nav>
-            <div class="sidebar-footer">
-                <p>v1.2.0 | Production</p>
+        </div>
+    </div>
+</header>
+
+<!-- KPI Cards -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-gh-card border border-gh-border p-5 rounded-2xl flex flex-col justify-between hover:border-gh-blue/50 transition-all group">
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-gh-muted text-[10px] font-bold uppercase tracking-[0.2em]">Total Sessions</span>
+            <div class="size-8 rounded-lg bg-gh-blue/10 flex items-center justify-center text-gh-blue group-hover:bg-gh-blue group-hover:text-white transition-all">
+                <span class="material-symbols-outlined text-lg">hub</span>
             </div>
-        </aside>
+        </div>
+        <div class="flex items-baseline">
+            <span id="total-hits" class="text-3xl font-black font-mono text-gh-blue">0</span>
+        </div>
+    </div>
+    <div class="bg-gh-card border border-gh-border p-5 rounded-2xl flex flex-col justify-between hover:border-gh-red/50 transition-all group">
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-gh-muted text-[10px] font-bold uppercase tracking-[0.2em]">Total Bruteforce</span>
+            <div class="size-8 rounded-lg bg-gh-red/10 flex items-center justify-center text-gh-red group-hover:bg-gh-red group-hover:text-white transition-all">
+                <span class="material-symbols-outlined text-lg">security</span>
+            </div>
+        </div>
+        <div class="flex items-baseline">
+            <span id="total-bruteforce" class="text-3xl font-black font-mono text-gh-red">0</span>
+        </div>
+    </div>
+    <div class="bg-gh-card border border-gh-border p-5 rounded-2xl flex flex-col justify-between hover:border-gh-yellow/50 transition-all group">
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-gh-muted text-[10px] font-bold uppercase tracking-[0.2em]">Active Now</span>
+            <div class="size-8 rounded-lg bg-gh-yellow/10 flex items-center justify-center text-gh-yellow group-hover:bg-gh-yellow group-hover:text-white transition-all">
+                <span class="material-symbols-outlined text-lg animate-pulse">radio_button_checked</span>
+            </div>
+        </div>
+        <div class="flex items-baseline">
+            <span id="active-now" class="text-3xl font-black font-mono text-gh-yellow">0</span>
+        </div>
+    </div>
+    <div class="bg-gh-card border border-gh-border p-5 rounded-2xl flex flex-col justify-between hover:border-gh-green/50 transition-all group">
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-gh-muted text-[10px] font-bold uppercase tracking-[0.2em]">Total Commands</span>
+            <div class="size-8 rounded-lg bg-gh-green/10 flex items-center justify-center text-gh-green group-hover:bg-gh-green group-hover:text-white transition-all">
+                <span class="material-symbols-outlined text-lg">terminal</span>
+            </div>
+        </div>
+        <div class="flex items-baseline">
+            <span id="total-commands" class="text-3xl font-black font-mono text-gh-green">0</span>
+        </div>
+    </div>
+</section>
 
-        <main class="content">
-            <header class="top-bar">
-                <div class="search-area">
-                    <span class="status-badge pulse">Real-time Protection Active</span>
-                </div>
-                <div class="user-profile">
-                    <span class="admin-badge">ADMIN</span>
-                </div>
-            </header>
-
-            <section id="dashboard" class="page active">
-                <div class="stats-grid">
-                    <div class="stat-card glass">
-                        <h3>Total Hits</h3>
-                        <p id="total-hits" class="count">0</p>
-                        <span class="trend up">+12% vs last 24h</span>
-                    </div>
-                    <div class="stat-card glass">
-                        <h3>Active Threats</h3>
-                        <p id="active-now" class="count">0</p>
-                        <span class="trend">Live Monitoring</span>
-                    </div>
-                    <div class="stat-card glass">
-                        <h3>Unique IPs</h3>
-                        <p id="unique-ips" class="count">0</p>
-                        <span class="trend up">+5%</span>
-                    </div>
-                    <div class="stat-card glass">
-                        <h3>Global Rank</h3>
-                        <p class="count">TOP 5%</p>
-                        <span class="trend">Hardened</span>
-                    </div>
-                </div>
-
-                <div class="charts-row">
-                    <div class="chart-container glass">
-                        <h3>Attack Distribution (by Country)</h3>
-                        <canvas id="countryChart"></canvas>
-                    </div>
-                    <div class="chart-container glass">
-                        <h3>Common Password Attempts</h3>
-                        <canvas id="passwordChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <section id="sessions" class="page">
-                <div class="table-container glass">
-                    <div class="table-header">
-                        <h3>Live Traffic</h3>
-                        <div class="actions">
-                            <span class="hint">Select an IP to Block</span>
-                        </div>
-                    </div>
-                    <table id="sessionsTable">
-                        <thead>
-                            <tr>
-                                <th>IP ADDRESS</th>
-                                <th>COUNTRY</th>
-                                <th>THREAT</th>
-                                <th>ACTIVITY</th>
-                                <th>ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Loaded via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section id="reports" class="page">
-                <div class="reports-grid" id="reportsList">
-                    <!-- Loaded via JS -->
-                </div>
-            </section>
-        </main>
+<!-- Analytics Section -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[500px]">
+    <!-- Global Threat Map (60%) -->
+    <div class="lg:col-span-8 bg-gh-card border border-gh-border rounded-xl flex flex-col overflow-hidden">
+        <div class="p-3 border-b border-gh-border flex justify-between items-center bg-gh-bg/30">
+            <h3 class="text-xs font-bold uppercase tracking-wider">Global Attack Surface</h3>
+            <div class="flex gap-4 text-[10px] font-mono">
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gh-red animate-pulse"></span> Active Attack</div>
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gh-blue"></span> Historical</div>
+            </div>
+        </div>
+        <div class="flex-grow relative p-4 bg-black/10">
+            <div id="world-map" style="height: 100%; width: 100%;"></div>
+        </div>
     </div>
 
-    <div id="notification-root"></div>
-    <script src="app.js"></script>
+    <!-- Active Sessions Table (40%) -->
+    <div class="lg:col-span-4 bg-gh-card border border-gh-border rounded-xl flex flex-col overflow-hidden">
+        <div class="p-3 border-b border-gh-border bg-gh-bg/30">
+            <h3 class="text-xs font-bold uppercase tracking-wider">Active Sessions</h3>
+        </div>
+        <div class="flex-grow overflow-y-auto custom-scrollbar">
+            <table id="sessionsTable" class="w-full text-left text-[11px] font-mono">
+                <thead class="sticky top-0 bg-gh-card text-gh-muted uppercase text-[9px] border-b border-gh-border">
+                    <tr>
+                        <th class="px-4 py-2">IP</th>
+                        <th class="px-4 py-2">Threat</th>
+                        <th class="px-4 py-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gh-border">
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Live Activity Feed -->
+<section class="bg-gh-card border border-gh-border rounded-xl flex flex-col overflow-hidden h-[300px]">
+    <div class="p-3 border-b border-gh-border bg-gh-bg/30 flex justify-between items-center">
+        <h3 class="text-xs font-bold uppercase tracking-wider">Live Activity Feed</h3>
+        <span class="text-[10px] font-mono text-gh-muted">STREAMING_ACTIVE</span>
+    </div>
+    <div class="relative flex-grow overflow-hidden bg-black/20">
+        <div id="live-log" class="absolute inset-0 overflow-y-auto font-mono text-[11px] p-4 custom-scrollbar flex flex-col gap-1">
+            <!-- WebSocket messages injected here -->
+            <div class="opacity-30">Waiting for incoming traffic...</div>
+        </div>
+        <!-- Scroll to Bottom Button (Hidden by default) -->
+        <button id="scrollToBottom" class="hidden absolute bottom-4 right-4 bg-gh-blue text-white text-[10px] font-bold py-1 px-3 rounded-full shadow-lg shadow-gh-blue/20 flex items-center gap-1 hover:bg-gh-blue/90 transition-all z-10 animate-fade-in">
+            <span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+            SCROLL TO BOTTOM
+        </button>
+    </div>
+</section>
+
+<!-- Command Intelligence -->
+<section class="bg-gh-card border border-gh-border rounded-xl flex flex-col overflow-hidden h-[450px]">
+    <div class="p-3 border-b border-gh-border bg-gh-bg/30 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider">Command Intelligence</h3>
+            <span class="px-2 py-0.5 rounded-full bg-gh-blue/10 text-gh-blue text-[9px] font-mono">Advanced Analytics</span>
+        </div>
+        <div class="flex gap-3">
+            <div class="relative">
+                <input type="text" id="command-search" placeholder="Search commands..." class="bg-gh-bg/50 border-gh-border text-gh-text text-[10px] font-mono rounded px-3 py-1 focus:ring-1 focus:ring-gh-blue outline-none w-48">
+            </div>
+            <button onclick="exportCommandsCSV()" class="text-[10px] font-mono bg-gh-blue/10 hover:bg-gh-blue text-gh-blue hover:text-white px-3 py-1 rounded border border-gh-blue/20 transition-all">
+                Export CSV
+            </button>
+        </div>
+    </div>
+    <div class="flex-grow overflow-y-auto custom-scrollbar">
+        <table id="commandIntelTable" class="w-full text-left text-[11px] font-mono">
+            <thead class="sticky top-0 bg-gh-card text-gh-muted uppercase text-[9px] border-b border-gh-border">
+                <tr>
+                    <th class="px-4 py-3">Command</th>
+                    <th class="px-4 py-3">Count</th>
+                    <th class="px-4 py-3">Risk</th>
+                    <th class="px-4 py-3">Category</th>
+                </tr>
+            </thead>
+            <tbody id="commandIntelBody" class="divide-y divide-gh-border">
+                <!-- Dynamic content -->
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Attack Timeline -->
+<section class="bg-gh-card border border-gh-border rounded-xl flex flex-col overflow-hidden h-[350px]">
+    <div class="p-3 border-b border-gh-border bg-gh-bg/30 flex justify-between items-center">
+        <h3 class="text-xs font-bold uppercase tracking-wider">Attack Timeline</h3>
+        <div class="flex gap-2">
+            <button id="btn-24h" onclick="updateTimeline('24h')" class="timeline-btn px-2 py-1 text-[10px] font-mono border border-gh-border rounded bg-gh-bg/50 hover:bg-gh-blue/20 transition-all font-bold text-gh-blue border-gh-blue/50">24H</button>
+            <button id="btn-3d" onclick="updateTimeline('3d')" class="timeline-btn px-2 py-1 text-[10px] font-mono border border-gh-border rounded bg-gh-bg/50 hover:bg-gh-blue/20 transition-all">3D</button>
+            <button id="btn-7d" onclick="updateTimeline('7d')" class="timeline-btn px-2 py-1 text-[10px] font-mono border border-gh-border rounded bg-gh-bg/50 hover:bg-gh-blue/20 transition-all">7D</button>
+            <button id="btn-30d" onclick="updateTimeline('30d')" class="timeline-btn px-2 py-1 text-[10px] font-mono border border-gh-border rounded bg-gh-bg/50 hover:bg-gh-blue/20 transition-all">1M</button>
+        </div>
+    </div>
+    <div class="flex-grow p-4 relative bg-black/10 min-h-[250px]">
+        <canvas id="timelineChart"></canvas>
+    </div>
+</section>
+
+<!-- Analytics Row -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+    <!-- Top Usernames -->
+    <div class="bg-gh-card border border-gh-border rounded-xl p-4 flex flex-col h-[400px]">
+        <h3 class="text-xs font-bold uppercase tracking-wider mb-4 text-gh-blue">Top Usernames</h3>
+        <div id="topUsernamesList" class="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-grow">
+            <!-- Dynamic content -->
+        </div>
+    </div>
+    <!-- Top Passwords -->
+    <div class="bg-gh-card border border-gh-border rounded-xl p-4 flex flex-col h-[400px]">
+        <h3 class="text-xs font-bold uppercase tracking-wider mb-4 text-gh-red">Top Passwords</h3>
+        <div id="topPasswordsList" class="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-grow">
+            <!-- Dynamic content -->
+        </div>
+    </div>
+    <!-- Top Countries -->
+    <div class="bg-gh-card border border-gh-border rounded-xl p-4 flex flex-col h-[400px]">
+        <h3 class="text-xs font-bold uppercase tracking-wider mb-4 text-gh-yellow">Top Countries</h3>
+        <div id="topCountriesList" class="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-grow">
+            <!-- Dynamic content -->
+        </div>
+    </div>
+</section>
+
+<!-- Reports Section -->
+<section class="bg-gh-card border border-gh-border rounded-xl p-5 flex flex-col mb-4">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-gh-green">Dynamic Threat Reports</h3>
+            <p class="text-[9px] text-gh-muted font-mono uppercase mt-1">Generate customized forensic audits</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="clearReports()" class="px-4 py-2 bg-gh-red/10 text-gh-red border border-gh-red/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-gh-red hover:text-white transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                Clear History
+            </button>
+            <button onclick="openReportModal()" class="px-5 py-2 bg-gh-green text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-gh-green/20 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">analytics</span>
+                Configure Report
+            </button>
+        </div>
+    </div>
+    
+    <div id="reportsList" class="flex-grow overflow-y-auto custom-scrollbar space-y-2 max-h-[250px] border-t border-gh-border pt-4">
+        <!-- Generated reports show up here -->
+        <div class="text-[10px] text-gh-muted font-mono italic text-center py-4">No reports generated in this session yet.</div>
+    </div>
+</section>
+
+<!-- Report Generation Modal -->
+<div id="reportModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div class="relative bg-gh-card border border-gh-border p-6 rounded-2xl w-full max-w-md shadow-2xl animate-modal-pop">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="size-11 rounded-xl bg-gh-green/10 flex items-center justify-center text-gh-green">
+                <span class="material-symbols-outlined text-2xl">description</span>
+            </div>
+            <div>
+                <h3 class="text-sm font-black text-gh-text uppercase tracking-widest">Generate Forensic Audit</h3>
+                <p class="text-[10px] text-gh-muted font-mono uppercase">Professional Threat Intelligence</p>
+            </div>
+        </div>
+
+        <div class="space-y-5">
+            <div class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-gh-muted uppercase tracking-widest">Start of Audit (24H)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="date" id="report-start-date" class="col-span-1.5 bg-gh-bg border border-gh-border text-gh-text text-[11px] font-mono rounded-lg px-3 py-2 outline-none focus:border-gh-green transition-all">
+                        <select id="report-start-hour" class="bg-gh-bg border border-gh-border text-gh-text text-[11px] font-mono rounded-lg px-2 py-2 outline-none focus:border-gh-green appearance-none cursor-pointer">
+                            <!-- JS will populate 00-23 -->
+                        </select>
+                        <select id="report-start-minute" class="bg-gh-bg border border-gh-border text-gh-text text-[11px] font-mono rounded-lg px-2 py-2 outline-none focus:border-gh-green appearance-none cursor-pointer">
+                            <!-- JS will populate 00-59 -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-gh-muted uppercase tracking-widest">End of Audit (24H)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="date" id="report-end-date" class="col-span-1.5 bg-gh-bg border border-gh-border text-gh-text text-[11px] font-mono rounded-lg px-3 py-2 outline-none focus:border-gh-green transition-all">
+                        <select id="report-end-hour" class="bg-gh-bg border border-gh-border text-gh-text text-[11px] font-mono rounded-lg px-2 py-2 outline-none focus:border-gh-green appearance-none cursor-pointer">
+                        </select>
+                        <select id="report-end-minute" class="bg-gh-bg border border-gh-border text-gh-text text-[11px] font-mono rounded-lg px-2 py-2 outline-none focus:border-gh-green appearance-none cursor-pointer">
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-bold text-gh-muted uppercase tracking-widest">Output Format</label>
+                <select id="report-format" class="w-full bg-gh-bg border border-gh-border text-gh-text text-[11px] font-mono rounded-lg px-3 py-2 outline-none focus:border-gh-green transition-all appearance-none cursor-pointer">
+                    <option value="html" selected>PROFESSIONAL HTML AUDIT</option>
+                    <option value="excel">MICROSOFT EXCEL (DATA ANALYSIS)</option>
+                </select>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-gh-muted uppercase tracking-widest">Audit Depth (Include)</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" id="include-ip" checked disabled class="hidden">
+                        <div class="w-4 h-4 rounded border border-gh-border bg-gh-bg group-hover:border-gh-blue flex items-center justify-center transition-all">
+                            <span class="material-symbols-outlined text-[12px] text-gh-blue">check</span>
+                        </div>
+                        <span class="text-[11px] text-gh-text group-hover:text-gh-blue transition-colors">IP ADDRESS (CORE)</span>
+                    </label>
+
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" id="include-geo" checked class="peer hidden">
+                        <div class="custom-checkbox w-4 h-4 rounded border border-gh-border bg-gh-bg peer-checked:bg-gh-blue/10 peer-checked:border-gh-blue group-hover:border-gh-blue flex items-center justify-center transition-all">
+                            <span class="check-icon material-symbols-outlined text-[12px] text-gh-blue opacity-0 transition-opacity">check</span>
+                        </div>
+                        <span class="text-[11px] text-gh-muted group-hover:text-gh-blue transition-colors">GEO-LOCATION</span>
+                    </label>
+
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" id="include-threat" checked class="peer hidden">
+                        <div class="custom-checkbox w-4 h-4 rounded border border-gh-border bg-gh-bg peer-checked:bg-gh-blue/10 peer-checked:border-gh-blue group-hover:border-gh-blue flex items-center justify-center transition-all">
+                            <span class="check-icon material-symbols-outlined text-[12px] text-gh-blue opacity-0 transition-opacity">check</span>
+                        </div>
+                        <span class="text-[11px] text-gh-muted group-hover:text-gh-blue transition-colors">SECURITY SCORE</span>
+                    </label>
+
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" id="include-creds" checked class="peer hidden">
+                        <div class="custom-checkbox w-4 h-4 rounded border border-gh-border bg-gh-bg peer-checked:bg-gh-blue/10 peer-checked:border-gh-blue group-hover:border-gh-blue flex items-center justify-center transition-all">
+                            <span class="check-icon material-symbols-outlined text-[12px] text-gh-blue opacity-0 transition-opacity">check</span>
+                        </div>
+                        <span class="text-[11px] text-gh-muted group-hover:text-gh-blue transition-colors">CREDENTIAL AUDIT</span>
+                    </label>
+
+                    <label class="flex items-center gap-2 cursor-pointer group col-span-2">
+                        <input type="checkbox" id="include-cmds" checked class="peer hidden">
+                        <div class="custom-checkbox w-4 h-4 rounded border border-gh-border bg-gh-bg peer-checked:bg-gh-blue/10 peer-checked:border-gh-blue group-hover:border-gh-blue flex items-center justify-center transition-all">
+                            <span class="check-icon material-symbols-outlined text-[12px] text-gh-blue opacity-0 transition-opacity">check</span>
+                        </div>
+                        <span class="text-[11px] text-gh-muted group-hover:text-gh-blue transition-colors">FORENSIC SHELL (COMMANDS)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-8">
+            <button onclick="closeReportModal()" class="flex-1 px-4 py-2.5 bg-gh-bg border border-gh-border text-gh-muted rounded-lg text-xs font-bold hover:text-gh-text transition-all">DISCARD</button>
+            <button onclick="generateReport()" id="btn-generate" class="flex-1 px-4 py-2.5 bg-gh-green text-white rounded-lg text-xs font-black uppercase tracking-widest shadow-lg shadow-gh-green/20 hover:opacity-90 transition-all">BUILD REPORT</button>
+        </div>
+    </div>
+</div>
+
+<!-- Block Confirmation Modal -->
+<div id="blockModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+    
+    <!-- Modal Content -->
+    <div class="relative bg-gh-card border border-gh-border p-6 rounded-2xl w-full max-w-sm shadow-2xl shadow-black/50 animate-modal-pop">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gh-red/10 flex items-center justify-center text-gh-red">
+                <span class="material-symbols-outlined">block</span>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-gh-text">Confirm Block</h3>
+                <p class="text-[10px] text-gh-muted font-mono uppercase tracking-wider">SecOps Action Required</p>
+            </div>
+        </div>
+        
+        <p class="text-xs text-gh-muted mb-6 leading-relaxed">
+            Are you sure you want to block <span id="modal-ip" class="text-gh-red font-mono font-bold"></span> and terminate all active sessions? This action will be logged.
+        </p>
+        
+        <div class="flex gap-3">
+            <button onclick="closeBlockModal()" class="flex-1 px-4 py-2 bg-gh-bg border border-gh-border text-gh-muted rounded-lg text-xs font-bold hover:text-gh-text hover:border-gh-border-hover transition-all">
+                CANCEL
+            </button>
+            <button onclick="confirmBlock()" class="flex-1 px-4 py-2 bg-gh-red text-white rounded-lg text-xs font-bold shadow-lg shadow-gh-red/20 hover:bg-gh-red/90 transition-all">
+                BLOCK THREAT
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes modal-pop {
+        0% { transform: scale(0.95); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-modal-pop {
+        animation: modal-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+</style>
+
+<footer class="mt-auto pt-4 border-t border-gh-border text-center">
+    <p class="text-[10px] text-gh-muted font-mono">
+        SSH Honeypot Threat Intel | System Version 2.4.0-Stable | Built for SecOps
+    </p>
+</footer>
+
+<script src="app.js"></script>
 </body>
 </html>

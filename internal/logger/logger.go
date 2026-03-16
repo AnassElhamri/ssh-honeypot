@@ -40,7 +40,7 @@ type Logger struct {
 	sessionsDir string
 	console     *log.Logger
 	DB          *DB
-	onLog       func(string)
+	callbacks   []func(string)
 	Alerts      *AlertHandler
 }
 
@@ -52,22 +52,23 @@ func New(level Level, sessionsDir string, db *DB, alerts *AlertHandler) *Logger 
 		console:     log.New(os.Stdout, "", 0),
 		DB:          db,
 		Alerts:      alerts,
+		callbacks:   make([]func(string), 0),
 	}
 }
 
-// SetCallback sets a custom logging callback (e.g., for the dashboard).
-func (l *Logger) SetCallback(cb func(string)) {
+// AddCallback adds a custom logging callback (e.g., for dashboards).
+func (l *Logger) AddCallback(cb func(string)) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.onLog = cb
+	l.callbacks = append(l.callbacks, cb)
 }
 
-// log writes a formatted line to stdout.
+// log writes a formatted line to stdout and all registered callbacks.
 func (l *Logger) log(level Level, format string, args ...any) {
 	if level < l.level {
 		return
 	}
-	ts  := time.Now().Format("2006-01-02 15:04:05")
+	ts := time.Now().Format("2006-01-02 15:04:05")
 	msg := fmt.Sprintf(format, args...)
 
 	colors := map[Level]string{
@@ -79,17 +80,18 @@ func (l *Logger) log(level Level, format string, args ...any) {
 	reset := "\033[0m"
 
 	l.mu.Lock()
-	cb := l.onLog
+	callbacks := make([]func(string), len(l.callbacks))
+	copy(callbacks, l.callbacks)
 	l.mu.Unlock()
 
 	line := fmt.Sprintf("%s [%s] %s", ts, level, msg)
-	if cb != nil {
+	for _, cb := range callbacks {
 		cb(line)
 	}
 
 	// Always print ERROR and WARN to console for easier debugging
 	// Unless it's INFO/DEBUG and a callback is active (dashboard mode)
-	if cb == nil || level >= WARN {
+	if len(callbacks) == 0 || level >= WARN {
 		l.console.Printf("%s%s [%s] %s%s", colors[level], ts, level, msg, reset)
 	}
 }

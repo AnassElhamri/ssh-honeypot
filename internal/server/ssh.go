@@ -45,6 +45,7 @@ type Server struct {
 	semaphore chan struct{}
 	blacklist sync.Map
 	fw        *Firewall
+	onPing    func(string, float64, float64)
 }
 
 // New creates and configures a new SSH honeypot server.
@@ -66,9 +67,19 @@ func New(cfg *Config, log *logger.Logger, db *logger.DB, geo *geoip.Resolver) (*
 	return s, nil
 }
 
+// SetOnPing registers a callback for real-time map pings.
+func (s *Server) SetOnPing(cb func(string, float64, float64)) {
+	s.onPing = cb
+}
+
 // Tracker returns the session tracker.
 func (s *Server) Tracker() *analyzer.Tracker {
 	return s.tracker
+}
+
+// Geo returns the geo resolver.
+func (s *Server) Geo() *geoip.Resolver {
+	return s.geo
 }
 
 // Listen starts the TCP listener and accepts connections.
@@ -121,6 +132,8 @@ func (s *Server) handleConn(conn net.Conn) {
 
 	conn.SetDeadline(time.Now().Add(s.cfg.ConnectionTimeout))
 
+	// Removed spoofing logic
+
 	sessionID, err := s.db.CreateSession(ip, port)
 	if err != nil {
 		s.log.Error("create session: %v", err)
@@ -161,6 +174,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		stats:   stats,
 		tracker: s.tracker,
 		timeout: s.cfg.ConnectionTimeout,
+		onPing:  s.onPing,
 	}
 	sess.handle()
 }
@@ -268,3 +282,5 @@ func (s *Server) BlockIP(ip string) {
 		s.log.Info("FIREWALL RULE ADDED: Blocked %s", ip)
 	}
 }
+
+// End of file

@@ -187,6 +187,62 @@ nav a:hover, nav a.active {
     color: var(--text-secondary);
 }
 
+/* Log Section */
+.log-section {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 400px; /* Fixed height for log area */
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.log-header h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--accent-color);
+}
+
+.status-indicator {
+    font-size: 11px;
+    color: var(--success);
+    background: rgba(0, 255, 170, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.log-container {
+    flex-grow: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column-reverse; /* Newest logs at top */
+}
+
+.log-line {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.log-placeholder {
+    color: var(--text-secondary);
+    opacity: 0.5;
+    text-align: center;
+    margin-top: 20px;
+}
+
 /* Tables */
 .table-container {
     padding: 0;
@@ -225,10 +281,12 @@ td {
     border-radius: 6px;
     font-size: 11px;
     font-weight: 600;
+    text-transform: uppercase;
 }
 
 .CRITICAL { background: rgba(255, 51, 51, 0.1); color: var(--danger); border: 1px solid var(--danger); }
 .HIGH { background: rgba(255, 170, 0, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+.MEDIUM { background: rgba(255, 255, 0, 0.1); color: #ffff00; border: 1px solid #ffff00; }
 .LOW { background: rgba(0, 255, 170, 0.1); color: var(--success); border: 1px solid var(--success); }
 
 .btn-block {

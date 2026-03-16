@@ -28,6 +28,7 @@ type Session struct {
 	stats   *analyzer.SessionStats
 	tracker *analyzer.Tracker
 	timeout time.Duration
+	onPing  func(string, float64, float64)
 }
 
 // handle runs the full lifecycle of an SSH session.
@@ -38,11 +39,13 @@ func (s *Session) handle() {
 	go func() {
 		loc := s.geo.Lookup(s.ip)
 		if loc != nil {
-			s.db.UpdateSessionGeo(s.id, loc.Country, loc.City, loc.ASN, loc.ISP)
+			s.db.UpdateSessionGeo(s.id, loc.Country, loc.City, loc.ASN, loc.ISP, loc.Lat, loc.Lon)
 			s.stats.SetCountry(loc.Country)
-			flag := geoip.FlagEmoji(loc.Country)
-			s.log.Info("GEOIP           ip=%-16s  %s %s  %s  %s",
-				s.ip, flag, loc.Country, loc.City, loc.ISP)
+			if s.onPing != nil {
+				s.onPing(s.ip, loc.Lat, loc.Lon)
+			}
+			s.log.Info("GEOIP           ip=%-16s  %s  %s  %s",
+				s.ip, loc.Country, loc.City, loc.ISP)
 		}
 	}()
 

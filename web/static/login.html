@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Login | SSH Honeypot Threat Intelligence</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                gh: {
+                  bg: '#0d1117',
+                  card: '#161b22',
+                  border: '#30363d',
+                  text: '#e6edf3',
+                  muted: '#8b949e',
+                  blue: '#58a6ff',
+                  red: '#f85149',
+                  yellow: '#d29922',
+                  green: '#3fb950'
+                }
+              },
+              fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+                mono: ['JetBrains Mono', 'monospace'],
+              }
+            }
+          }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-grid-pattern {
+          background-image: 
+            radial-gradient(circle at 2px 2px, #30363d 1px, transparent 0);
+          background-size: 40px 40px;
+        }
+        .data-flow-line {
+          position: absolute;
+          background: linear-gradient(to right, transparent, #58a6ff, transparent);
+          height: 1px;
+          width: 100%;
+          opacity: 0.15;
+        }
+    </style>
+</head>
+<body class="bg-gh-bg text-gh-text font-sans antialiased min-h-screen flex flex-col relative overflow-hidden">
+<div class="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none"></div>
+<div class="data-flow-line top-[20%] left-0"></div>
+<div class="data-flow-line top-[50%] left-0"></div>
+<div class="data-flow-line top-[80%] left-0"></div>
+<div class="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+    <svg class="absolute -top-20 -left-20 w-[600px] h-[600px] text-gh-blue" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-dasharray="1 2" stroke-width="0.1"></circle>
+        <circle cx="50" cy="50" fill="none" r="30" stroke="currentColor" stroke-width="0.05"></circle>
+    </svg>
+    <svg class="absolute -bottom-40 -right-40 w-[800px] h-[800px] text-gh-red" viewBox="0 0 100 100">
+        <path d="M 0,50 Q 50,0 100,50" fill="none" stroke="currentColor" stroke-dasharray="0.5 1" stroke-width="0.1"></path>
+        <path d="M 0,60 Q 50,10 100,60" fill="none" stroke="currentColor" stroke-width="0.05"></path>
+    </svg>
+</div>
+<main class="relative z-10 flex-grow flex flex-col items-center justify-center p-6">
+    <div class="mb-8 text-center flex flex-col items-center">
+        <div class="inline-flex items-center justify-center bg-gh-card p-1 rounded-2xl mb-4 shadow-2xl shadow-gh-green/20 border border-gh-border overflow-hidden">
+            <img src="logo.png" alt="SnakeSec" class="w-16 h-16 object-cover rounded-xl">
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-gh-text">SnakeSec</h1>
+        <p class="text-[10px] text-gh-muted font-mono uppercase tracking-[0.2em] mt-2">Threat Intelligence Platform</p>
+    </div>
+    <div class="w-full max-w-[400px] bg-gh-card border border-gh-border rounded-xl shadow-2xl p-8">
+        <form class="space-y-6" id="loginForm" action="/login" method="POST">
+            <div class="bg-gh-bg border border-gh-border p-3 rounded flex items-start gap-3">
+                <span class="material-symbols-outlined text-gh-green text-sm">terminal</span>
+                <p class="text-[11px] font-mono text-gh-muted leading-relaxed">
+                    SYSTEM: SECURE_AUTH_LAYER READY<br/>
+                    STATUS: LISTENING ON PORT 443
+                </p>
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gh-text" for="username">
+                    Username
+                </label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gh-muted text-lg transition-colors group-focus-within:text-gh-blue">person</span>
+                    <input class="block w-full pl-10 pr-3 py-2 bg-gh-bg border border-gh-border rounded-md text-gh-text text-sm focus:ring-1 focus:ring-gh-blue focus:border-gh-blue transition-all placeholder-gh-muted/50" id="username" name="username" placeholder="Operator ID" required="" type="text"/>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <label class="block text-sm font-medium text-gh-text" for="password">
+                        Security Key
+                    </label>
+                    <a class="text-xs font-medium text-gh-blue hover:underline" href="#">Forgot password?</a>
+                </div>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gh-muted text-lg transition-colors group-focus-within:text-gh-blue">key</span>
+                    <input class="block w-full pl-10 pr-3 py-2 bg-gh-bg border border-gh-border rounded-md text-gh-text text-sm focus:ring-1 focus:ring-gh-blue focus:border-gh-blue transition-all placeholder-gh-muted/50" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+                </div>
+            </div>
+            <button class="w-full bg-gh-blue hover:bg-gh-blue/90 text-gh-bg font-bold py-2.5 rounded-md transition-all transform active:scale-[0.98] shadow-lg shadow-gh-blue/20 flex items-center justify-center gap-2" type="submit">
+                <span class="material-symbols-outlined text-xl">login</span>
+                Initialize Session
+            </button>
+            <div id="errorMsg" class="text-gh-red text-[11px] font-mono text-center hidden">
+                INVALID CREDENTIALS. ACCESS DENIED.
+            </div>
+        </form>
+        <div class="mt-8 pt-6 border-t border-gh-border text-center">
+            <p class="text-sm text-gh-muted">
+                New analyst? 
+                <a class="text-gh-blue font-semibold hover:underline ml-1" href="#">Request Access</a>
+            </p>
+        </div>
+    </div>
+    <div class="mt-8 flex flex-col items-center gap-2 opacity-60">
+        <div class="flex items-center gap-4 text-[10px] font-mono text-gh-muted">
+            <span class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-gh-green"></span> 
+                ENCRYPTION: AES-256
+            </span>
+            <span class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-gh-blue"></span> 
+                NODE: US-EAST-1
+            </span>
+        </div>
+        <p class="text-[10px] text-gh-muted font-mono">
+            Auth Service v2.4.0-Stable | Restricted Access
+        </p>
+    </div>
+</main>
+<footer class="p-6 text-center relative z-10">
+    <p class="text-[10px] text-gh-muted font-mono uppercase tracking-widest">
+        Property of Honeypot Global Security Network © 2024
+    </p>
+</footer>
+
+<script>
+    const form = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('error')) {
+        errorMsg.classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
